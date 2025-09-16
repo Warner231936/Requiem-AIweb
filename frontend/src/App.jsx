@@ -19,6 +19,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [tasks, setTasks] = useState([])
   const [overallProgress, setOverallProgress] = useState(0)
+  const [events, setEvents] = useState([])
   const [messages, setMessages] = useState([])
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
@@ -45,6 +46,7 @@ function App() {
     setUser(null)
     setTasks([])
     setOverallProgress(0)
+    setEvents([])
     setMessages([])
   }
 
@@ -118,6 +120,7 @@ function App() {
     const data = await response.json()
     setTasks(data.tasks ?? [])
     setOverallProgress(Math.round(Number(data.overall_progress ?? 0)))
+    setEvents(data.events ?? [])
   }
 
   const refreshMessages = async () => {
@@ -257,7 +260,7 @@ function App() {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
               <ChatWindow messages={messages} onSend={handleSendMessage} />
-              <ProgressPanel tasks={tasks} overallProgress={overallProgress} />
+              <ProgressPanel tasks={tasks} overallProgress={overallProgress} events={events} />
             </div>
           </div>
         )}

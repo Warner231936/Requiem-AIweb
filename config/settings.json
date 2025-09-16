@@ -25,23 +25,53 @@
   "progress": [
     {
       "name": "Data Parsing",
-      "progress": 85
+      "progress": 85,
+      "description": "Ingesting structured and unstructured payloads."
     },
     {
       "name": "Training Model",
-      "progress": 42
+      "progress": 42,
+      "description": "Executing GPU training cycles against curated corpora."
     },
     {
       "name": "Response Optimization",
-      "progress": 67
+      "progress": 67,
+      "description": "Calibrating inference prompts and latency tolerances."
     },
     {
       "name": "Security Checks",
-      "progress": 100
+      "progress": 100,
+      "description": "Verifying dependency and credential hygiene."
     }
   ],
   "chat": {
-    "ai_persona": "mystical"
+    "ai_persona": "mystical",
+    "provider": "template",
+    "providers": {
+      "openai": {
+        "api_key": "REPLACE_WITH_OPENAI_KEY",
+        "model": "gpt-4o-mini",
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "temperature": 0.6,
+        "max_tokens": 256
+      },
+      "ollama": {
+        "base_url": "http://localhost:11434",
+        "model": "llama3",
+        "options": {
+          "temperature": 0.6,
+          "num_ctx": 4096
+        }
+      }
+    },
+    "request_timeout_seconds": 30
+  },
+  "progress_settings": {
+    "auto_increment_chat": true,
+    "auto_increment_step": 7,
+    "event_history_limit": 20,
+    "default_event_source": "api",
+    "chat_annotation_source": "chat-annotation"
   },
   "files": {
     "media_root": "media",

@@ -64,6 +64,31 @@ class TaskResponse(TaskBase):
         from_attributes = True
 
 
+class TaskEventBase(BaseModel):
+    task_name: str = Field(..., min_length=1, max_length=120)
+    progress: int = Field(..., ge=0, le=100)
+    note: Optional[str] = Field(None, max_length=255)
+    source: Optional[str] = Field(None, max_length=120)
+
+
+class TaskEventCreate(TaskEventBase):
+    pass
+
+
+class TaskEventResponse(BaseModel):
+    id: int
+    task_id: int
+    task_name: str
+    progress: int
+    source: str
+    note: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class ProgressReport(BaseModel):
     tasks: List[TaskResponse]
+    events: List[TaskEventResponse]
     overall_progress: float
