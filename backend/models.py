@@ -44,3 +44,24 @@ class Task(Base):
     progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    events: Mapped[list["TaskEvent"]] = relationship(
+        back_populates="task", cascade="all, delete-orphan", lazy="selectin"
+    )
+
+
+class TaskEvent(Base):
+    __tablename__ = "task_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True)
+    progress: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    source: Mapped[str] = mapped_column(String(120), nullable=False, default="api")
+    note: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
+
+    task: Mapped[Task] = relationship(back_populates="events")
+
+    @property
+    def task_name(self) -> str:
+        return self.task.name if self.task else ""

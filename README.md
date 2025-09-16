@@ -20,8 +20,9 @@ Requiem AI is a dark, mystical web portal that delivers an always-on conversatio
 ## Features
 - 🔐 **Secure authentication** with hashed passwords (bcrypt) and JWT access tokens.
 - 🪄 **Immersive UI**: glowing "Requiem" branding, animated nebula background, neon accents, and responsive layout.
-- 💬 **Real-time chat** with auto-scrolling dialogue bubbles and a mystical AI persona response generator.
+- 💬 **Real-time chat** with persona-driven responses and pluggable LLM providers (template, OpenAI, or local Ollama).
 - 📊 **Dynamic progress dashboard** that visualises task completion percentages with animated bars and overall completion.
+- 📡 **Live telemetry log** that records task events from chat annotations or API-driven job updates.
 - 🖼️ **Profile picture upload** during sign-up with media hosting by the backend.
 - ⚙️ **Single source of configuration** (`config/settings.json`) covering app, security, database, frontend, and API options.
 - 🪟 **Windows automation scripts** (`scripts/*.bat`) for installing and launching backend/frontend services.
@@ -43,13 +44,30 @@ All runtime settings live in **`config/settings.json`**. Key sections:
 | `security` | JWT secret, algorithm, and expiry minutes. **Change the secret key before going live.** |
 | `database` | SQLAlchemy database URL (defaults to local SQLite). |
 | `frontend` | UI strings and Tailwind animation timing. |
-| `progress` | Seed tasks with initial completion percentages. |
-| `chat` | Persona hint used by the responder. |
+| `progress` | Seed tasks with initial completion percentages and optional descriptions. |
+| `chat` | Persona hint and active provider (`template`, `openai`, or `ollama`). Replace `REPLACE_WITH_OPENAI_KEY` before enabling OpenAI. |
+| `progress_settings` | Controls chat auto-increment, annotation source names, and telemetry history limits. |
 | `files` | Media directories for profile pictures. |
 | `cors` | Allowed web origins. |
 | `api` | Base URL used by the frontend dev server proxy. |
 
 Edit this file to point to production resources (e.g., PostgreSQL URL, public hostnames). Restart the services after changes.
+
+### AI Provider Setup
+
+The responder defaults to the internal **template** persona, so no external credentials are required. To switch providers:
+
+1. **OpenAI API**
+   - Set `"provider": "openai"` under the `chat` section.
+   - Replace the placeholder `REPLACE_WITH_OPENAI_KEY` with a valid secret key.
+   - Optionally adjust `model`, `temperature`, and `max_tokens`.
+   - Restart the backend after editing the config.
+2. **Local Ollama**
+   - Install [Ollama](https://ollama.ai/) on Windows and pull a chat-capable model (e.g., `ollama pull llama3`).
+   - Set `"provider": "ollama"` and update `base_url`/`model` if you run a custom instance.
+   - Tune any generation parameters inside the `options` object.
+
+The shared `request_timeout_seconds` value governs API calls for any remote provider.
 
 ## Quick Start (Windows 10)
 1. **Clone the repository**
@@ -148,18 +166,34 @@ Base URL defaults to `http://localhost:8000`.
 | `GET` | `/auth/me` | Current user profile. Requires `Authorization: Bearer <token>`. |
 | `GET` | `/chat/history?limit=100` | Fetch recent chat messages. |
 | `POST` | `/chat/message` | Submit a user message and receive user/AI message pair. |
-| `GET` | `/progress/` | Retrieve task list and overall progress. |
+| `GET` | `/progress/` | Retrieve task list, telemetry events, and overall progress. |
 | `PUT` | `/progress/{task_id}` | Update a task (name/progress/description). |
 | `POST` | `/progress/reset` | Reset tasks to the values in `settings.json`. |
+| `POST` | `/progress/events` | Record a progress event for a task (creates it if missing). |
+| `GET` | `/progress/events` | Fetch the most recent task events (respecting the configured history limit). |
 | `GET` | `/health` | Simple health probe for monitoring. |
 
 All authenticated routes expect a valid JWT from `/auth/login`.
 
 ## Progress Tracking Logic
-- Tasks are seeded from `config/settings.json` on startup.
-- Each time a chat message is posted, the earliest in-progress task advances by up to 7% (never exceeding 100%).
-- Progress API responses include both per-task percentages and a computed overall completion value.
-- The React dashboard refreshes progress automatically after every chat exchange.
+- Tasks are seeded from `config/settings.json` on startup and may include descriptions for the dashboard.
+- Embed `[progress|Task Name|90|optional note]` inside any chat message to log a telemetry event and update that task to 90%.
+- The `/progress/events` endpoint (and dashboard log) show the most recent events up to the configured history limit.
+- When no annotations are detected, the backend optionally auto-advances the oldest incomplete task by the configured step.
+- The React dashboard refreshes both tasks and event telemetry after every chat exchange.
+
+### Reporting Progress via API
+
+External workers can record the same telemetry without going through chat:
+
+```powershell
+curl -X POST http://localhost:8000/progress/events ^
+  -H "Authorization: Bearer <TOKEN>" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"task_name\":\"Training Model\",\"progress\":75,\"note\":\"Epoch 12 complete\"}"
+```
+
+The event source defaults to `api`, but you can override it per request. History depth, chat annotation source, and auto-increment behaviour all live under `progress_settings` in `config/settings.json`.
 
 ## Deployment Notes
 - Update `config/settings.json` with production hostnames, HTTPS origins, and a strong `jwt_secret_key`.
@@ -176,5 +210,6 @@ All authenticated routes expect a valid JWT from `/auth/login`.
 | Frontend cannot reach backend | Confirm both services are running, check `config/settings.json` CORS origins, and verify firewall rules for ports 5173 and 8000. |
 | Profile pictures not saving | Confirm the `media/profile_pics` directory is writable; Windows may require adjusted permissions. |
 | Need to reset task data | Execute `POST /progress/reset` (Swagger UI available at `http://localhost:8000/docs`). |
+| OpenAI provider fails with 401/429 | Double-check the API key in `config/settings.json`, ensure billing is active, and confirm outbound internet access. |
 
 Enter the portal and let Requiem guide your nocturnal builds.
