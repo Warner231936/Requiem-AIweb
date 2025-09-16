@@ -1,0 +1,62 @@
+{
+  "app": {
+    "name": "Requiem AI Portal",
+    "environment": "development",
+    "version": "0.1.0",
+    "host": "0.0.0.0",
+    "port": 8000
+  },
+  "security": {
+    "jwt_secret_key": "change-this-secret-in-production",
+    "jwt_algorithm": "HS256",
+    "access_token_expire_minutes": 120
+  },
+  "database": {
+    "url": "sqlite:///./requiem.db"
+  },
+  "frontend": {
+    "dev_server_port": 5173,
+    "title": "Requiem",
+    "subtitle": "The AI That Never Sleeps.",
+    "task_animation": {
+      "completed_pulse_ms": 3000
+    }
+  },
+  "progress": [
+    {
+      "name": "Data Parsing",
+      "progress": 85
+    },
+    {
+      "name": "Training Model",
+      "progress": 42
+    },
+    {
+      "name": "Response Optimization",
+      "progress": 67
+    },
+    {
+      "name": "Security Checks",
+      "progress": 100
+    }
+  ],
+  "chat": {
+    "ai_persona": "mystical"
+  },
+  "files": {
+    "media_root": "media",
+    "profile_pictures": "media/profile_pics"
+  },
+  "cors": {
+    "allowed_origins": [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173",
+      "http://localhost:4173",
+      "http://www.requiem-ai.online",
+      "https://www.requiem-ai.online"
+    ]
+  },
+  "api": {
+    "base_url": "http://localhost:8000"
+  }
+}
