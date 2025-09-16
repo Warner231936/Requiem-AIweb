@@ -13,8 +13,12 @@ from .models import Base, Task
 from .routers import auth as auth_router
 from .routers import chat as chat_router
 from .routers import progress as progress_router
+from .routers import monitoring as monitoring_router
+from .services.telemetry_agent import create_agent_from_config
 
 app = FastAPI(title=settings.app.name, version=settings.app.version)
+
+telemetry_agent = create_agent_from_config()
 
 
 @app.on_event("startup")
@@ -44,6 +48,7 @@ def on_startup() -> None:
     finally:
         session.close()
 
+    telemetry_agent.start()
 
 origins: List[str] = list(settings.cors.allowed_origins)
 app.add_middleware(
@@ -57,11 +62,17 @@ app.add_middleware(
 app.include_router(auth_router.router)
 app.include_router(chat_router.router)
 app.include_router(progress_router.router)
+app.include_router(monitoring_router.router)
 
 
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.on_event("shutdown")
+def on_shutdown() -> None:
+    telemetry_agent.stop()
 
 
 config_path = Path(__file__).resolve().parent.parent / "config"

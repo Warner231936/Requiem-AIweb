@@ -20,6 +20,7 @@ function App() {
   const [tasks, setTasks] = useState([])
   const [overallProgress, setOverallProgress] = useState(0)
   const [events, setEvents] = useState([])
+  const [analytics, setAnalytics] = useState(null)
   const [messages, setMessages] = useState([])
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
@@ -47,6 +48,7 @@ function App() {
     setTasks([])
     setOverallProgress(0)
     setEvents([])
+    setAnalytics(null)
     setMessages([])
   }
 
@@ -75,7 +77,12 @@ function App() {
       setDashboardLoading(true)
       setBootstrapError('')
       try {
-        await Promise.all([refreshProfile(), refreshProgress(), refreshMessages()])
+        await Promise.all([
+          refreshProfile(),
+          refreshProgress(),
+          refreshMessages(),
+          refreshAnalytics(),
+        ])
       } catch (error) {
         if (!cancelled) {
           setBootstrapError(error.message)
@@ -121,6 +128,12 @@ function App() {
     setTasks(data.tasks ?? [])
     setOverallProgress(Math.round(Number(data.overall_progress ?? 0)))
     setEvents(data.events ?? [])
+  }
+
+  const refreshAnalytics = async () => {
+    const response = await authorizedFetch('/progress/analytics')
+    const data = await response.json()
+    setAnalytics(data)
   }
 
   const refreshMessages = async () => {
@@ -191,7 +204,7 @@ function App() {
     })
     const data = await response.json()
     setMessages((prev) => [...prev, ...data])
-    await refreshProgress()
+    await Promise.all([refreshProgress(), refreshAnalytics()])
   }
 
   const handleLogout = () => {
@@ -260,7 +273,12 @@ function App() {
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr]">
               <ChatWindow messages={messages} onSend={handleSendMessage} />
-              <ProgressPanel tasks={tasks} overallProgress={overallProgress} events={events} />
+              <ProgressPanel
+                tasks={tasks}
+                overallProgress={overallProgress}
+                events={events}
+                analytics={analytics}
+              />
             </div>
           </div>
         )}

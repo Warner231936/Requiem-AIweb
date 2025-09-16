@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -9,7 +10,7 @@ from .. import auth as auth_utils
 from .. import models, schemas
 from ..config import settings
 from ..database import get_db
-from ..services import progress_tracker
+from ..services import analytics, progress_tracker
 
 router = APIRouter(prefix="/progress", tags=["progress"])
 
@@ -28,6 +29,17 @@ def get_progress(
     events = progress_tracker.get_recent_events(db, limit=history_limit)
     overall = progress_tracker.calculate_overall_progress(tasks)
     return schemas.ProgressReport(tasks=tasks, events=events, overall_progress=overall)
+
+
+@router.get("/analytics", response_model=schemas.ProgressAnalytics)
+def get_progress_analytics(
+    current_user: models.User = Depends(auth_utils.get_current_user),
+    db: Session = Depends(get_db),
+) -> schemas.ProgressAnalytics:
+    result = analytics.compute_progress_analytics(db)
+    payload = asdict(result)
+    payload["per_task"] = [asdict(entry) for entry in result.per_task]
+    return schemas.ProgressAnalytics(**payload)
 
 
 @router.put("/{task_id}", response_model=schemas.TaskResponse)

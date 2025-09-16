@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -92,3 +92,27 @@ class ProgressReport(BaseModel):
     tasks: List[TaskResponse]
     events: List[TaskEventResponse]
     overall_progress: float
+
+
+class TaskAnalytics(BaseModel):
+    name: str
+    progress: int
+    completed: bool
+    events_count: int
+    last_event_at: Optional[datetime]
+    last_event_source: Optional[str]
+    last_event_note: Optional[str]
+    seconds_to_completion: Optional[float]
+
+
+class ProgressAnalytics(BaseModel):
+    tasks_total: int
+    tasks_completed: int
+    tasks_in_progress: int
+    tasks_not_started: int
+    overall_progress: float
+    events_total: int
+    events_by_source: Dict[str, int]
+    last_event_at: Optional[datetime]
+    average_completion_seconds: Optional[float]
+    per_task: List[TaskAnalytics]
