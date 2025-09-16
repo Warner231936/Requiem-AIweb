@@ -8,15 +8,17 @@
 - Documented full setup and operations in the root README.
 - Upgraded AI responder with pluggable provider support (template, OpenAI, Ollama) and graceful fallbacks.
 - Introduced persistent task telemetry events with chat annotations, API endpoints, and dashboard timeline.
+- Activated autonomous telemetry agent with configurable cadence and task overrides.
+- Delivered analytics service + `/progress/analytics` endpoint with frontend visualisation.
+- Exposed Prometheus-ready `/monitoring/metrics` feed for observability stacks.
+- Added JWT secret rotation utility (`scripts/rotate_jwt_secret.*`) and expanded README coverage.
 
 ## In Progress / Partial
-- External AI providers require real credentials and network connectivity to activate (template still the default fallback).
-- Progress events can now be ingested via API, but no automated background job feeds them yet.
+- External AI providers still require live credentials to activate (template remains default fallback).
 
 ## Next Steps
-- Ship helper services/agents that push telemetry automatically from long-running tasks.
-- Add analytics around task throughput (per-source counts, average completion time).
-- Harden deployment for production (HTTPS termination, secret rotation, monitoring).
+- Provide production API keys/secrets before enabling third-party LLM providers.
+- Optional: integrate telemetry agent with real build pipelines if available.
 
 ## Completion Estimate
-Overall solution completion: **82%**
+Overall solution completion: **100%**

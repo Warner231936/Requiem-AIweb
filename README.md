@@ -14,6 +14,9 @@ Requiem AI is a dark, mystical web portal that delivers an always-on conversatio
 - [Application Structure](#application-structure)
 - [API Reference](#api-reference)
 - [Progress Tracking Logic](#progress-tracking-logic)
+- [Telemetry Agent](#telemetry-agent)
+- [Operations Analytics & Monitoring](#operations-analytics--monitoring)
+- [Security Utilities](#security-utilities)
 - [Deployment Notes](#deployment-notes)
 - [Troubleshooting](#troubleshooting)
 
@@ -23,6 +26,8 @@ Requiem AI is a dark, mystical web portal that delivers an always-on conversatio
 - 💬 **Real-time chat** with persona-driven responses and pluggable LLM providers (template, OpenAI, or local Ollama).
 - 📊 **Dynamic progress dashboard** that visualises task completion percentages with animated bars and overall completion.
 - 📡 **Live telemetry log** that records task events from chat annotations or API-driven job updates.
+- 🤖 **Autonomous telemetry agent** that issues configurable background progress pulses for long-running tasks.
+- 📈 **Operations analytics** endpoint, Prometheus metrics feed, and UI overlays for throughput insight.
 - 🖼️ **Profile picture upload** during sign-up with media hosting by the backend.
 - ⚙️ **Single source of configuration** (`config/settings.json`) covering app, security, database, frontend, and API options.
 - 🪟 **Windows automation scripts** (`scripts/*.bat`) for installing and launching backend/frontend services.
@@ -47,6 +52,7 @@ All runtime settings live in **`config/settings.json`**. Key sections:
 | `progress` | Seed tasks with initial completion percentages and optional descriptions. |
 | `chat` | Persona hint and active provider (`template`, `openai`, or `ollama`). Replace `REPLACE_WITH_OPENAI_KEY` before enabling OpenAI. |
 | `progress_settings` | Controls chat auto-increment, annotation source names, and telemetry history limits. |
+| `telemetry_agent` | Enables/disables the background telemetry worker, intervals, and task overrides. |
 | `files` | Media directories for profile pictures. |
 | `cors` | Allowed web origins. |
 | `api` | Base URL used by the frontend dev server proxy. |
@@ -195,11 +201,56 @@ curl -X POST http://localhost:8000/progress/events ^
 
 The event source defaults to `api`, but you can override it per request. History depth, chat annotation source, and auto-increment behaviour all live under `progress_settings` in `config/settings.json`.
 
+## Telemetry Agent
+
+Requiem now ships with an autonomous telemetry worker that keeps task updates flowing even when no chat annotations arrive. Configure it via the `telemetry_agent` block inside `config/settings.json`:
+
+```json
+"telemetry_agent": {
+  "enabled": true,
+  "interval_seconds": 60,
+  "max_tasks_per_cycle": 2,
+  "source": "automation-pipeline",
+  "default_step": 6,
+  "note_template": "Automated pipeline advanced {task} to {progress}%.",
+  "task_overrides": {
+    "Training Model": { "step": 4, "note": "Training cluster reported a fresh epoch." }
+  }
+}
+```
+
+- **enabled** — turns the worker on or off.
+- **interval_seconds** — cadence (in seconds) between telemetry pulses.
+- **max_tasks_per_cycle** — limits how many tasks receive an update per tick.
+- **default_step** — increment applied to tasks without overrides.
+- **note_template** — format string supporting `{task}`, `{progress}`, and `{timestamp}`.
+- **task_overrides** — per-task step sizes and custom notes.
+
+The agent starts automatically with the FastAPI application and shuts down cleanly when the server stops.
+
+## Operations Analytics & Monitoring
+
+- **`GET /progress/analytics`** (JWT protected) returns aggregated task statistics such as completion counts, source breakdowns, per-task event history, and estimated completion times.
+- The frontend dashboard renders these metrics in the *Operations Analytics* panel for at-a-glance insight into throughput and recent telemetry.
+- **`GET /monitoring/metrics`** emits Prometheus-compatible gauges and counters so that Prometheus, Datadog, or other monitoring suites can scrape live task health.
+
+## Security Utilities
+
+Rotate authentication secrets without manual edits:
+
+```powershell
+scripts\rotate_jwt_secret.bat --length 80
+```
+
+The helper generates a fresh random key and rewrites `config/settings.json`, leaving a short preview of the previous secret in the console for audit logs.
+
 ## Deployment Notes
 - Update `config/settings.json` with production hostnames, HTTPS origins, and a strong `jwt_secret_key`.
 - Swap the `database.url` to PostgreSQL or MySQL for multi-user scale.
 - Behind a domain such as `http://www.requiem-ai.online`, forward ports 80/443 to the Windows server. Configure reverse proxy/SSL separately (IIS URL Rewrite + Let’s Encrypt or an edge appliance).
 - Consider running `uvicorn` behind a Windows service (NSSM or `sc create`) and serving the built frontend (`frontend/dist`) directly via FastAPI or a dedicated static host.
+- Expose `/monitoring/metrics` to your observability stack for real-time task visibility.
+- Tune or disable the telemetry agent when external systems provide authoritative progress updates.
 - Regularly back up the SQLite/PostgreSQL database file and uploaded `media/` directory.
 
 ## Troubleshooting

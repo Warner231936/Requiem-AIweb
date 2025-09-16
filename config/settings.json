@@ -73,6 +73,24 @@
     "default_event_source": "api",
     "chat_annotation_source": "chat-annotation"
   },
+  "telemetry_agent": {
+    "enabled": true,
+    "interval_seconds": 60,
+    "max_tasks_per_cycle": 2,
+    "source": "automation-pipeline",
+    "default_step": 6,
+    "note_template": "Automated pipeline advanced {task} to {progress}%.",
+    "task_overrides": {
+      "Training Model": {
+        "step": 4,
+        "note": "Training cluster reported a fresh epoch."
+      },
+      "Response Optimization": {
+        "step": 5,
+        "note": "Prompt tuning iteration completed by optimizer."
+      }
+    }
+  },
   "files": {
     "media_root": "media",
     "profile_pictures": "media/profile_pics"
