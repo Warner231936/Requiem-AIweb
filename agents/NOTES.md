@@ -12,6 +12,7 @@
 - Delivered analytics service + `/progress/analytics` endpoint with frontend visualisation.
 - Exposed Prometheus-ready `/monitoring/metrics` feed for observability stacks.
 - Added JWT secret rotation utility (`scripts/rotate_jwt_secret.*`) and expanded README coverage.
+- Added Linux shell installers/launchers plus README guidance to mirror Windows automation flows.
 
 ## In Progress / Partial
 - External AI providers still require live credentials to activate (template remains default fallback).
