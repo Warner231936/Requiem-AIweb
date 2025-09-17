@@ -30,13 +30,14 @@ Requiem AI is a dark, mystical web portal that delivers an always-on conversatio
 - 📈 **Operations analytics** endpoint, Prometheus metrics feed, and UI overlays for throughput insight.
 - 🖼️ **Profile picture upload** during sign-up with media hosting by the backend.
 - ⚙️ **Single source of configuration** (`config/settings.json`) covering app, security, database, frontend, and API options.
-- 🪟 **Windows automation scripts** (`scripts/*.bat`) for installing and launching backend/frontend services.
+- 🧰 **Cross-platform automation scripts** (`scripts/*.bat` for Windows, `scripts/*.sh` for Linux) covering install and launch flows.
 
 ## System Requirements
-- Windows 10 (PowerShell or Command Prompt).
+- Windows 10 (PowerShell or Command Prompt) **or** Linux (tested on Ubuntu 22.04+/Debian-based with Bash 5+).
 - Python 3.11+ and `pip` on PATH.
 - Node.js 20+ and npm.
 - Git for cloning.
+- For Linux scripts: GNU `bash`, `coreutils`, and permission to execute shell scripts inside the repository.
 
 Optional (production): a process manager such as NSSM or a Windows Service for FastAPI, and a reverse proxy (IIS/NGINX) for HTTPS.
 
@@ -95,37 +96,91 @@ The shared `request_timeout_seconds` value governs API calls for any remote prov
    ```
 5. Visit [http://localhost:5173](http://localhost:5173) to enter the Requiem portal.
 
+## Quick Start (Linux)
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-org/Requiem-AIweb.git
+   cd Requiem-AIweb
+   ```
+2. **Install backend dependencies** (set `PYTHON_BIN` if your Python binary has a different name)
+   ```bash
+   ./scripts/install_backend.sh
+   ```
+3. **Install frontend dependencies**
+   ```bash
+   ./scripts/install_frontend.sh
+   ```
+4. **Launch everything** (press <kbd>Ctrl</kbd>+<kbd>C</kbd> to stop both services)
+   ```bash
+   ./scripts/launch_portal.sh
+   ```
+   The launcher reads default host/port values from `config/settings.json`. Override them via positional arguments:
+   ```bash
+   ./scripts/launch_portal.sh 0.0.0.0 8000 localhost 5173
+   ```
+5. Visit [http://localhost:5173](http://localhost:5173) to enter the Requiem portal.
+
 ## Manual Setup
 
 ### Backend
 1. Create a virtual environment and install requirements:
-   ```powershell
-   python -m venv .venv
-   .\.venv\Scripts\activate
-   python -m pip install --upgrade pip
-   pip install -r backend\requirements.txt
-   ```
+   - **Windows (PowerShell)**
+     ```powershell
+     python -m venv .venv
+     .\.venv\Scripts\activate
+     python -m pip install --upgrade pip
+     pip install -r backend\requirements.txt
+     ```
+   - **Linux (Bash)**
+     ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate
+     python -m pip install --upgrade pip
+     pip install -r backend/requirements.txt
+     ```
 2. Run FastAPI with Uvicorn:
-   ```powershell
-   uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
-   ```
+   - **Windows (PowerShell)**
+     ```powershell
+     uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+     ```
+   - **Linux (Bash)**
+     ```bash
+     source .venv/bin/activate
+     uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+     ```
 
 ### Frontend
 1. Install dependencies:
-   ```powershell
-   cd frontend
-   npm install
-   ```
-2. Start the Vite dev server:
-   ```powershell
-   npm run dev
-   ```
+   - **Windows (PowerShell)**
+     ```powershell
+     cd frontend
+     npm install
+     ```
+   - **Linux (Bash)**
+     ```bash
+     cd frontend
+     npm install
+     ```
+2. Start the Vite dev server (defaults read from `config/settings.json`):
+   - **Windows (PowerShell)**
+     ```powershell
+     npm run dev
+     ```
+   - **Linux (Bash)**
+     ```bash
+     npm run dev -- --host localhost --port 5173
+     ```
    Vite proxies API requests to the FastAPI server using the shared config file.
 
 ## Running the Portal
-- `scripts\launch_backend.bat` &mdash; start only the backend (`scripts\launch_backend.bat [host] [port]`).
-- `scripts\launch_frontend.bat` &mdash; start only the frontend dev server.
-- `scripts\launch_portal.bat` &mdash; start both in separate terminals.
+- **Windows automation**
+  - `scripts\launch_backend.bat` &mdash; start only the backend (`scripts\launch_backend.bat [host] [port]`).
+  - `scripts\launch_frontend.bat` &mdash; start only the frontend dev server.
+  - `scripts\launch_portal.bat` &mdash; start both in separate terminals.
+- **Linux automation**
+  - `scripts/launch_backend.sh` &mdash; start only the backend (`./scripts/launch_backend.sh [host] [port]`, defaults from `config/settings.json`).
+  - `scripts/launch_frontend.sh` &mdash; start only the frontend dev server (`./scripts/launch_frontend.sh [host] [port]`).
+  - `scripts/launch_portal.sh` &mdash; start both in the current terminal (`./scripts/launch_portal.sh [backend_host] [backend_port] [frontend_host] [frontend_port]`).
 
 To build the frontend for production:
 ```powershell
@@ -157,6 +212,7 @@ frontend/
     components/     # AuthPanel, ChatWindow, ProgressPanel
 scripts/
   *.bat             # Windows installers and launchers
+  *.sh              # Linux installers and launchers
 agents/
   NOTES.md          # Progress ledger for developers
 media/profile_pics/ # Uploaded profile images
